@@ -5,7 +5,12 @@ import Image from 'next/image';
 import { Pokemon } from '@/pokemons';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
+}
+
+export const generateStaticParams = async () => {
+  const static151Pokemons = Array.from({ length: 151 }).map((_, i) => `${i + 1}`);
+  return static151Pokemons.map(id => ({ id }));
 }
 
 const getPokemon = async (id: string): Promise<Pokemon> => {
@@ -13,20 +18,20 @@ const getPokemon = async (id: string): Promise<Pokemon> => {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
     const pokemon = await response.json();
     return pokemon;
-  } catch (error) {
+  } catch (_) {
     notFound();
   }
 }
 
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
   try {
-    const { id, name } = await getPokemon(params.id);
+    const { id, name } = await getPokemon((await params).id);
 
     return {
       title: `#${id}- ${name}`,
       description: `Pagina del pokemon ${name}`,
     }
-  } catch (error) {
+  } catch (_) {
     return {
       title: 'Pagina de pokemon',
       description: 'Detalle pokemon',
@@ -36,7 +41,7 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
 
 const PokemonPage = async ({ params }: Props) => {
 
-  const pokemon = await getPokemon(params.id);
+  const pokemon = await getPokemon((await params).id);
 
   return (
     <div className="flex mt-5 flex-col items-center text-slate-800">
